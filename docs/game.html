@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Game - Играть онлайн</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://unpkg.com/tradingview-widget-embedding@1.0.0/dist/tradingview-widget-embedding.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --profit-color: #198754;
+            --loss-color: #dc3545;
+            --bg-dark: #121826;
+            --card-bg: #1e293b;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .logo-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid #2d3748;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .profit {
+            color: var(--profit-color);
+            font-weight: bold;
+        }
+        
+        .loss {
+            color: var(--loss-color);
+            font-weight: bold;
+        }
+        
+        .coin-card {
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .coin-card.active {
+            border-color: var(--primary-color);
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+        
+        .position-card {
+            border-left: 4px solid;
+            padding-left: 15px;
+        }
+        
+        .position-long {
+            border-left-color: var(--profit-color);
+        }
+        
+        .position-short {
+            border-left-color: var(--loss-color);
+        }
+        
+        .badge-leverage {
+            background: linear-gradient(45deg, #6c757d, #495057);
+        }
+        
+        #chartContainer {
+            height: 500px;
+            background: #1a1f2e;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #198754 0%, #14532d 100%);
+            border: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #7f1d1d 100%);
+            border: none;
+        }
+        
+        .modal-content {
+            background-color: var(--card-bg);
+        }
+        
+        .btn-close-white {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        
+        .alert-custom {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        @media (max-width: 768px) {
+            #chartContainer {
+                height: 300px;
+            }
+            
+            .container {
+                padding: 0 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <span class="logo-icon">📈</span> Trading Game
+            </a>
+            <div class="d-flex align-items-center">
+                <div class="me-3 text-light">
+                    <small>Баланс:</small>
+                    <strong id="userBalance">$2,000.00</strong>
+                </div>
+                <button class="btn btn-outline-light btn-sm me-2" onclick="showDepositModal()">
+                    <i class="fas fa-wallet"></i>
+                </button>
+                <a href="index.html" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-home"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Левая колонка -->
+            <div class="col-lg-8">
+                <!-- График -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0" id="chartTitle">BTC/USDT</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary active" onclick="changeTimeframe('1m')">1M</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="changeTimeframe('5m')">5M</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="changeTimeframe('15m')">15M</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="changeTimeframe('1h')">1H</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="changeTimeframe('4h')">4H</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="chartContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Панель торговли -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-trade-federation"></i> Торговая панель</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Выбор монеты -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label class="form-label">Выберите монету:</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <div class="coin-card card p-3 text-center flex-fill" onclick="selectCoin('BTC/USDT')">
+                                        <i class="fab fa-bitcoin fs-4"></i>
+                                        <div>BTC/USDT</div>
+                                        <small class="text-muted" id="btcPrice">$45,000</small>
+                                    </div>
+                                    <div class="coin-card card p-3 text-center flex-fill" onclick="selectCoin('ETH/USDT')">
+                                        <i class="fab fa-ethereum fs-4"></i>
+                                        <div>ETH/USDT</div>
+                                        <small class="text-muted" id="ethPrice">$2,400</small>
+                                    </div>
+                                    <div class="coin-card card p-3 text-center flex-fill" onclick="selectCoin('BNB/USDT')">
+                                        <i class="fas fa-coins fs-4"></i>
+                                        <div>BNB/USDT</div>
+                                        <small class="text-muted" id="bnbPrice">$300</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Направление и плечо -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Направление:</label>
+                                <div class="btn-group w-100">
+                                    <button class="btn btn-success btn-lg btn-trade-long active" onclick="selectTradeType('long')">
+                                        <i class="fas fa-arrow-up"></i> LONG
+                                    </button>
+                                    <button class="btn btn-danger btn-lg btn-trade-short" onclick="selectTradeType('short')">
+                                        <i class="fas fa-arrow-down"></i> SHORT
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Плечо:</label>
+                                <div class="btn-group w-100">
+                                    <button class="btn btn-outline-warning leverage-btn active" onclick="selectLeverage(2)">2x</button>
+                                    <button class="btn btn-outline-warning leverage-btn" onclick="selectLeverage(5)">5x</button>
+                                    <button class="btn btn-outline-warning leverage-btn" onclick="selectLeverage(10)">10x</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Сумма и цена -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Сумма (USDT):</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="tradeAmount" value="100" min="10" step="10">
+                                </div>
+                                <div class="form-text">Минимальная сумма: $10</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Цена входа:</label>
+                                <div class="input-group input-group-lg">
+                                    <input type="text" class="form-control" id="entryPrice" value="45,000.00" readonly>
+                                    <span class="input-group-text">USDT</span>
+                                </div>
+                                <div class="form-text">Текущая рыночная цена</div>
+                            </div>
+                        </div>
+
+                        <!-- Stop Loss и Take Profit -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Stop Loss:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-shield-alt"></i></span>
+                                    <input type="number" class="form-control" id="stopLoss" placeholder="Авто">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Take Profit:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-bullseye"></i></span>
+                                    <input type="number" class="form-control" id="takeProfit" placeholder="Авто">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Информация о сделке -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card bg-dark">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-info-circle"></i> Информация о сделке</h6>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Маржа:</span>
+                                            <strong id="marginAmount">$20.00</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Ликвидация:</span>
+                                            <strong id="liquidationPrice">$45,000.00</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <button class="btn btn-primary btn-lg w-100 py-3" onclick="openPosition()">
+                                    <i class="fas fa-bolt"></i> ОТКРЫТЬ ПОЗИЦИЮ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка -->
+            <div class="col-lg-4">
+                <!-- Портфель -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Портфель</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span>Баланс:</span>
+                            <h4 class="mb-0" id="portfolioBalance">$2,000.00</h4>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Общий PnL:</span>
+                            <strong class="profit" id="totalPnl">+$0.00</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Открытые позиции:</span>
+                            <strong id="openPositions">0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Винрейт:</span>
+                            <strong id="winRate">0%</strong>
+                        </div>
+                        <button class="btn btn-outline-info w-100" onclick="showPortfolioDetails()">
+                            <i class="fas fa-chart-line"></i> Статистика
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Открытые позиции -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-layer-group"></i> Открытые позиции</h5>
+                        <span class="badge bg-primary" id="positionsCount">0</span>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                        <div id="positionsList" class="list-group list-group-flush">
+                            <div class="list-group-item bg-transparent text-center py-4">
+                                <i class="fas fa-inbox fs-1 text-muted"></i>
+                                <p class="text-muted mb-0">Нет открытых позиций</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Рейтинг -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-trophy"></i> Топ трейдеров</h5>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
+                        <div id="leaderboardList" class="list-group list-group-flush">
+                            <!-- Рейтинг будет добавляться здесь -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div class="modal fade" id="tradeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-check-circle"></i> Подтверждение сделки</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="tradeModalBody">
+                    <!-- Содержимое будет динамически -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-success" onclick="confirmTrade()">
+                        <i class="fas fa-check"></i> Подтвердить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Алерты -->
+    <div id="alertContainer"></div>
+
+    <!-- Скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/tradingview-widget-embedding@1.0.0/dist/tradingview-widget-embedding.umd.js"></script>
+    <script src="js/game.js"></script>
+    
+    <script>
+        // Инициализация игры
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация активной монеты
+            document.querySelectorAll('.coin-card')[0].classList.add('active');
+            
+            // Загрузка начальных цен
+            updatePrices();
+            
+            // Загрузка рейтинга
+            loadLeaderboard();
+            
+            // Автообновление каждые 5 секунд
+            setInterval(updatePrices, 5000);
+            setInterval(loadLeaderboard, 30000);
+        });
+    </script>
+</body>
+</html>
