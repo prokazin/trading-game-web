@@ -1,0 +1,87 @@
+/* Дополнительные стили */
+.tradingview-widget-container {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.alert-position {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Анимации */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn-primary:hover {
+    animation: pulse 0.3s ease-in-out;
+}
+
+/* Стили для скроллбара */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .col-lg-8, .col-lg-4 {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+}
+
+/* Тёмная тема для Bootstrap компонентов */
+.form-control, .form-select {
+    background-color: #2d3748;
+    border-color: #4a5568;
+    color: #f7fafc;
+}
+
+.form-control:focus {
+    background-color: #2d3748;
+    border-color: #4299e1;
+    color: #f7fafc;
+    box-shadow: 0 0 0 0.25rem rgba(66, 153, 225, 0.25);
+}
+
+.input-group-text {
+    background-color: #4a5568;
+    border-color: #4a5568;
+    color: #cbd5e0;
+}
+
+/* Стили для таблиц */
+.table-dark {
+    --bs-table-bg: #2d3748;
+    --bs-table-striped-bg: #374151;
+    --bs-table-hover-bg: #4b5563;
+    color: #fff;
+}
