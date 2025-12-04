@@ -1,0 +1,15 @@
+{
+  "name": "trading-game-frontend",
+  "version": "1.0.0",
+  "description": "Web interface for Trading Game Simulator",
+  "main": "index.html",
+  "scripts": {
+    "dev": "live-server docs --port=3000",
+    "build": "mkdir -p dist && cp -r docs/* dist/",
+    "deploy": "gh-pages -d dist"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "gh-pages": "^5.0.0"
+  }
+}
