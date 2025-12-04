@@ -17,3 +17,6 @@ yarn-error.log*
 # Build
 dist/
 _site/
+
+# Убедитесь, что .nojekyll не игнорируется
+!.nojekyll
