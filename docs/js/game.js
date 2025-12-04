@@ -48,7 +48,130 @@ function selectCoin(coin) {
     event.currentTarget.classList.add('active');
     
     // Обновление графика
-    updateChart();
+   // Обновление графика
+function updateChart() {
+    const chartContainer = document.getElementById('chartContainer');
+    chartContainer.innerHTML = ''; // Очищаем контейнер
+    
+    const symbol = currentGame.currentCoin.split('/')[0];
+    
+    // Создаем контейнер для графика
+    const chartDiv = document.createElement('div');
+    chartDiv.id = 'tvChart';
+    chartDiv.style.width = '100%';
+    chartDiv.style.height = '100%';
+    chartContainer.appendChild(chartDiv);
+    
+    // Создаем график
+    const chart = LightweightCharts.createChart(chartDiv, {
+        width: chartContainer.clientWidth,
+        height: chartContainer.clientHeight,
+        layout: {
+            backgroundColor: '#1e293b',
+            textColor: '#d1d4dc',
+        },
+        grid: {
+            vertLines: {
+                color: '#2B2B43',
+            },
+            horzLines: {
+                color: '#2B2B43',
+            },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+            borderColor: '#485c7b',
+        },
+        timeScale: {
+            borderColor: '#485c7b',
+            timeVisible: true,
+        },
+    });
+    
+    // Создаем свечной ряд
+    const candleSeries = chart.addCandlestickSeries({
+        upColor: '#26a69a',
+        downColor: '#ef5350',
+        borderVisible: false,
+        wickUpColor: '#26a69a',
+        wickDownColor: '#ef5350',
+    });
+    
+    // Генерируем тестовые данные
+    const data = generateCandleData(100);
+    candleSeries.setData(data);
+    
+    // Добавляем объемы
+    const volumeSeries = chart.addHistogramSeries({
+        color: '#26a69a',
+        priceFormat: {
+            type: 'volume',
+        },
+        priceScaleId: '',
+        scaleMargins: {
+            top: 0.8,
+            bottom: 0,
+        },
+    });
+    
+    const volumeData = data.map(candle => ({
+        time: candle.time,
+        value: candle.volume || Math.random() * 1000 + 500,
+        color: candle.close >= candle.open ? 'rgba(38, 166, 154, 0.5)' : 'rgba(239, 83, 80, 0.5)',
+    }));
+    
+    volumeSeries.setData(volumeData);
+    
+    // Обновляем заголовок
+    document.getElementById('chartTitle').textContent = currentGame.currentCoin;
+    
+    // Обработка ресайза
+    const resizeObserver = new ResizeObserver(() => {
+        chart.applyOptions({
+            width: chartContainer.clientWidth,
+            height: chartContainer.clientHeight,
+        });
+    });
+    
+    resizeObserver.observe(chartContainer);
+}
+
+// Генерация тестовых свечных данных
+function generateCandleData(count) {
+    const data = [];
+    let time = Date.now() / 1000 - count * 3600; // Начальное время
+    
+    let price = 45000; // Начальная цена для BTC
+    
+    for (let i = 0; i < count; i++) {
+        time += 3600; // Каждый час
+        
+        // Генерируем случайное движение цены
+        const change = (Math.random() - 0.5) * 0.02; // ±1%
+        const newPrice = price * (1 + change);
+        
+        const open = price;
+        const close = newPrice;
+        const high = Math.max(open, close) * (1 + Math.random() * 0.01);
+        const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+        const volume = Math.random() * 1000 + 500;
+        
+        data.push({
+            time: time,
+            open: open,
+            high: high,
+            low: low,
+            close: close,
+            volume: volume,
+        });
+        
+        price = newPrice;
+    }
+    
+    return data;
+}
 }
 
 // Выбор типа сделки
